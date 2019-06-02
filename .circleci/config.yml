@@ -1,0 +1,29 @@
+version: 2.1
+
+jobs:
+  check:
+    docker:
+      - image: circleci/python:3.7.3
+    steps:
+      - checkout
+      - run:
+          command: make install check
+
+  test:
+    docker:
+      - image: circleci/python:3.7.3
+    steps:
+      - checkout
+      - run:
+          command: make install test
+
+workflows:
+  version: 2
+  pull_request:
+    jobs:
+      - check:
+          filters: &pull_request_filters
+            branches:
+              ignore: master
+      - test:
+          filters: *pull_request_filters

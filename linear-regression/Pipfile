@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+black = "==19.3b0"
+isort = "==4.3.20 "
+pytest = "==4.6.0"
+scikit-learn = "==0.21.2"
+
+[packages]
+numpy = "==1.16.4"
+
+[requires]
+python_version = "3.7"
