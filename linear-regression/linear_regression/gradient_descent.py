@@ -15,10 +15,11 @@ class GradientDescentParameters:
 
 
 def cost(coefficients, x, y):
-    actual_prediction = np.dot(x, coefficients)
-    delta = (actual_prediction - y) ** 2
-    delta_sum = np.sum(delta)
-    return 1 / (2 * x.shape[0]) * delta_sum
+    predictions = np.dot(x, coefficients)
+    deltas = predictions - y
+    deltas_squared = deltas ** 2
+    deltas_squared_sum = np.sum(deltas_squared)
+    return deltas_squared_sum / (2 * x.shape[0])
 
 
 class MaxNumIterationsChecker:
