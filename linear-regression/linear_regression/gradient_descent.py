@@ -72,12 +72,15 @@ class GradientDescent:
         self._parameters = parameters
 
     def run(self):
+        self._init_fit()
+        self._fit()
+        return self._create_linear_regressor()
+
+    def _init_fit(self):
         self._init_normalizer()
         self._normalize_x()
         self._init_coefficients()
         self._init_stop_condition_checkers()
-        self._train()
-        return self._create_linear_regressor()
 
     def _init_normalizer(self):
         self._normalize = MeanNormalization.from_data(self._train_x)
@@ -103,7 +106,7 @@ class GradientDescent:
             ),
         ]
 
-    def _train(self):
+    def _fit(self):
         iteration_count = 0
         while not self._stop(iteration_count):
             self._update_coefficients()
