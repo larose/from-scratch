@@ -51,11 +51,7 @@ class ConvergenceChecker:
 
     def _has_converged(self, cost_fn):
         current_cost = cost_fn()
-        previous_cost = self._previous_cost
-        if previous_cost is None:
-            previous_cost = current_cost
-
-        has_converged = previous_cost - current_cost < self._convergence_threshold
+        has_converged = self._previous_cost - current_cost < self._convergence_threshold
         self._previous_cost = current_cost
         return has_converged
 
