@@ -42,12 +42,12 @@ def data(request):
 def test_linear_regression_output(data):
     train_x, train_y, test = data
 
-    expected_linear_regressor = linear_model.LinearRegression()
-    expected_linear_regressor.fit(train_x, train_y)
-    expected_prediction = expected_linear_regressor.predict(test)
+    reference_linear_regressor = linear_model.LinearRegression()
+    reference_linear_regressor.fit(train_x, train_y)
+    reference_prediction = reference_linear_regressor.predict(test)
 
     gradient_descent = GradientDescent(train_x, train_y, GradientDescentParameters())
-    actual_linear_regressor = gradient_descent.fit()
-    actual_prediction = actual_linear_regressor.predict(test)
+    linear_regressor = gradient_descent.fit()
+    prediction = linear_regressor.predict(test)
 
-    assert actual_prediction == pytest.approx(expected_prediction, rel=0.1)
+    assert prediction == pytest.approx(reference_prediction, rel=0.1)
