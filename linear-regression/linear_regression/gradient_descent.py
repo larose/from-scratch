@@ -12,23 +12,23 @@ class GradientDescentState:
     coefficients: np.ndarray
 
 
-def init_gradient_descent_state(normalized_x_with_intercept: np.ndarray):
-    coefficients = init_coefficients(normalized_x_with_intercept)
+def init_gradient_descent_state(num_features: int):
+    coefficients = init_coefficients(num_features)
 
     return GradientDescentState(iteration_count=0, coefficients=coefficients)
 
 
-def init_coefficients(normalized_x_with_intercept):
-    return np.zeros((normalized_x_with_intercept.shape[1], 1))
+def init_coefficients(num_features: int):
+    return np.zeros((num_features + 1, 1))
 
 
 def gradient_descent(
-    learning_rate: float,
-    cost_funtion: CostFunction,
-    stop_conditions: typing.List[typing.Callable[[GradientDescentState], bool]],
-    normalized_x_with_intercept: np.ndarray,
+        learning_rate: float,
+        cost_funtion: CostFunction,
+        stop_conditions: typing.List[typing.Callable[[GradientDescentState], bool]],
+        num_features: int,
 ):
-    state = init_gradient_descent_state(normalized_x_with_intercept)
+    state = init_gradient_descent_state(num_features)
 
     while not stop(state, stop_conditions):
         gradient = cost_funtion.gradient(state.coefficients)

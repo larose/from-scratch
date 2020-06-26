@@ -85,7 +85,7 @@ def test_linear_regression_output(dataset: Dataset):
         learning_rate=0.01,
         cost_funtion=cost_function,
         stop_conditions=stop_conditions,
-        normalized_x_with_intercept=normalized_x_with_intercept,
+        num_features=dataset.num_features,
     )
     linear_regressor = LinearRegressor(coefficients, normalize)
     prediction = linear_regressor.predict(dataset.test_x)
