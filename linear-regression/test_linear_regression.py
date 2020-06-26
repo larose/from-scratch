@@ -11,6 +11,7 @@ from linear_regression.gradient_descent import gradient_descent
 from linear_regression.linear_regressor import LinearRegressor
 from linear_regression.normalization import MeanNormalization
 from linear_regression.stop_conditions import (
+    AnyStopCondition,
     ConvergenceStopCondition,
     MaxNumIterationsStopCondition,
 )
@@ -23,15 +24,9 @@ class Dataset:
     num_train_data: int
     num_test_data: int
     num_features: int
-
-    # Matrix: num_train_data x num_features
-    train_x: np.ndarray
-
-    # Vector column: num_train_data x 1
-    train_y: np.array
-
-    # Matrix: num_test_data x num_features
-    test_x: np.array
+    train_x: np.ndarray  # Matrix: num_train_data x num_features
+    train_y: np.array  # Vector column: num_train_data x 1
+    test_x: np.array  # Matrix: num_test_data x num_features
 
 
 @pytest.fixture(scope="module", params=["toy", "petrol"])
@@ -76,15 +71,17 @@ def test_linear_regression_output(dataset: Dataset):
     )
 
     cost_function = MeanSquareError(dataset.train_y, normalized_x_with_intercept)
-    stop_conditions = [
-        MaxNumIterationsStopCondition(1_000_000),
-        ConvergenceStopCondition(10_000, 0.00001, cost_function),
-    ]
+    stop_condition = AnyStopCondition(
+        [
+            MaxNumIterationsStopCondition(1_000_000),
+            ConvergenceStopCondition(10_000, 0.00001, cost_function),
+        ]
+    )
 
     coefficients = gradient_descent(
         learning_rate=0.01,
         cost_funtion=cost_function,
-        stop_conditions=stop_conditions,
+        stop_condition=stop_condition,
         num_features=dataset.num_features,
     )
     linear_regressor = LinearRegressor(coefficients, normalize)

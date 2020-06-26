@@ -1,36 +1,21 @@
-import typing
-from dataclasses import dataclass
-
 import numpy as np
 
 from .cost_functions import CostFunction
-
-
-@dataclass
-class GradientDescentState:
-    iteration_count: int
-    coefficients: np.ndarray
-
-
-def init_gradient_descent_state(num_features: int):
-    coefficients = init_coefficients(num_features)
-
-    return GradientDescentState(iteration_count=0, coefficients=coefficients)
-
-
-def init_coefficients(num_features: int):
-    return np.zeros((num_features + 1, 1))
+from .gradient_descent_state import GradientDescentState
+from .stop_conditions import StopCondition
 
 
 def gradient_descent(
-        learning_rate: float,
-        cost_funtion: CostFunction,
-        stop_conditions: typing.List[typing.Callable[[GradientDescentState], bool]],
-        num_features: int,
+    learning_rate: float,
+    cost_funtion: CostFunction,
+    stop_condition: StopCondition,
+    num_features: int,
 ):
-    state = init_gradient_descent_state(num_features)
+    state = GradientDescentState(
+        iteration_count=0, coefficients=np.zeros((num_features + 1, 1))
+    )
 
-    while not stop(state, stop_conditions):
+    while not stop_condition.evaluate(state):
         gradient = cost_funtion.gradient(state.coefficients)
         coefficient_deltas = -learning_rate * gradient
         state.coefficients += coefficient_deltas

@@ -7,7 +7,7 @@ class CostFunction(abc.ABC):
     def gradient(self, coefficients: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
 
-    def value(self, coefficients: np.ndarray) -> float:
+    def evaluate(self, coefficients: np.ndarray) -> float:
         raise NotImplementedError()
 
 
@@ -22,7 +22,7 @@ class MeanSquareError(CostFunction):
         gradient_sum_term = self._normalized_x_with_intercept.T.dot(deltas)
         return gradient_sum_term / self._normalized_x_with_intercept.shape[0]
 
-    def value(self, coefficients: np.ndarray) -> float:
+    def evaluate(self, coefficients: np.ndarray) -> float:
         predictions = np.dot(self._normalized_x_with_intercept, coefficients)
         deltas = predictions - self._train_y
         deltas_squared = deltas ** 2
