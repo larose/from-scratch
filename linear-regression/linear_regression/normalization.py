@@ -10,10 +10,10 @@ class MeanNormalization:
         return (x - self._average) / self._range
 
     @staticmethod
-    def from_data(x):
+    def from_data(x: np.ndarray):
         min = x.min(axis=0)
         max = x.max(axis=0)
-        average = x.mean(axis=0)
         range = max - min
+        average = x.mean(axis=0)
 
         return MeanNormalization(average=average, range=range)

@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from linear_regression.linear_regressor import LinearRegressor
-from linear_regression.normalizaton import MeanNormalization
+from .linear_regressor import LinearRegressor
+from .normalization import MeanNormalization
 
 
 @dataclass
@@ -68,16 +68,17 @@ class GradientDescent:
         self._train_y = train_y
         self._parameters = parameters
 
-    def run(self):
-        self._init_fit()
-        self._fit()
-        return self._create_linear_regressor()
-
-    def _init_fit(self):
         self._init_normalizer()
         self._normalize_x()
         self._init_coefficients()
         self._init_stop_condition_checkers()
+
+    def fit(self):
+        iteration_count = 0
+        while not self._stop(iteration_count):
+            self._update_coefficients()
+            iteration_count += 1
+        return self._create_linear_regressor()
 
     def _init_normalizer(self):
         self._normalize = MeanNormalization.from_data(self._train_x)
@@ -102,12 +103,6 @@ class GradientDescent:
                 ),
             ),
         ]
-
-    def _fit(self):
-        iteration_count = 0
-        while not self._stop(iteration_count):
-            self._update_coefficients()
-            iteration_count += 1
 
     def _create_linear_regressor(self):
         return LinearRegressor(self._coefficients, self._normalize)

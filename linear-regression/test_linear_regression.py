@@ -5,7 +5,10 @@ import numpy as np
 import pytest
 from sklearn import linear_model
 
-from linear_regression import GradientDescentParameters, create_linear_regressor
+from linear_regression.gradient_descent import (
+    GradientDescent,
+    GradientDescentParameters,
+)
 
 DATASETS_DIRECTORY = "datasets"
 
@@ -43,9 +46,8 @@ def test_linear_regression_output(data):
     expected_linear_regressor.fit(train_x, train_y)
     expected_prediction = expected_linear_regressor.predict(test)
 
-    actual_linear_regressor = create_linear_regressor(
-        train_x, train_y, GradientDescentParameters()
-    )
+    gradient_descent = GradientDescent(train_x, train_y, GradientDescentParameters())
+    actual_linear_regressor = gradient_descent.fit()
     actual_prediction = actual_linear_regressor.predict(test)
 
     assert actual_prediction == pytest.approx(expected_prediction, rel=0.1)
