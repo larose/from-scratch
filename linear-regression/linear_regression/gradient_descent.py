@@ -33,7 +33,11 @@ class GradientDescent:
 
     def fit(self):
         while not self._stop():
-            self._update_coefficients()
+            cost_function_gradient = self._cost_function_gradient()
+            coefficient_deltas = (
+                -self._parameters.learning_rate * cost_function_gradient
+            )
+            self._coefficients += coefficient_deltas
             self._iteration_count += 1
 
         return self._create_linear_regressor()
@@ -71,19 +75,11 @@ class GradientDescent:
             for stop_condition in self._stop_conditions
         )
 
-    def _update_coefficients(self):
-        coefficient_deltas = self._coefficient_deltas()
-        self._coefficients += coefficient_deltas
-
-    def _coefficient_deltas(self):
+    def _cost_function_gradient(self):
         predicted_values = np.dot(self._normalized_x_with_intercept, self._coefficients)
         deltas = predicted_values - self._train_y
         gradient_sum_term = self._normalized_x_with_intercept.T.dot(deltas)
-        gradient_coefficient = (
-            self._parameters.learning_rate / self._normalized_x_with_intercept.shape[0]
-        )
-        coefficient_deltas = -gradient_coefficient * gradient_sum_term
-        return coefficient_deltas
+        return gradient_sum_term / self._normalized_x_with_intercept.shape[0]
 
     @staticmethod
     def _cost(coefficients, x, y):
