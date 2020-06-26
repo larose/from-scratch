@@ -8,6 +8,7 @@ from sklearn import linear_model
 
 from linear_regression.cost_functions import MeanSquareError
 from linear_regression.gradient_descent import gradient_descent
+from linear_regression.gradient_descent_state import GradientDescentState
 from linear_regression.linear_regressor import LinearRegressor
 from linear_regression.normalization import MeanNormalization
 from linear_regression.stop_conditions import (
@@ -78,11 +79,15 @@ def test_linear_regression_output(dataset: Dataset):
         ]
     )
 
+    state = GradientDescentState(
+        iteration_count=0, coefficients=np.zeros((dataset.num_features + 1, 1))
+    )
+
     coefficients = gradient_descent(
         learning_rate=0.01,
         cost_funtion=cost_function,
         stop_condition=stop_condition,
-        num_features=dataset.num_features,
+        state=state,
     )
     linear_regressor = LinearRegressor(coefficients, normalize)
     prediction = linear_regressor.predict(dataset.test_x)
