@@ -25,13 +25,13 @@ class Dataset:
     num_features: int
 
     # Matrix: num_train_data x num_features
-    train_independant_variables: np.ndarray
+    train_x: np.ndarray
 
     # Vector column: num_train_data x 1
-    train_dependent_variables: np.array
+    train_y: np.array
 
     # Matrix: num_test_data x num_features
-    test_independent_variables: np.array
+    test_x: np.array
 
 
 @pytest.fixture(scope="module", params=["toy", "petrol"])
@@ -50,32 +50,32 @@ def dataset(request):
         for row in csv.reader(test_file):
             test.append([float(element) for element in row])
 
-    train_independant_variables = np.array(x)
-    test_independant_variables = np.array(test)
+    train_x = np.array(x)
+    train_y = np.array(y, ndmin=2).T
+    test_x = np.array(test)
     return Dataset(
-        num_train_data=train_independant_variables.shape[0],
-        num_test_data=test_independant_variables.shape[0],
-        num_features=train_independant_variables.shape[1],
-
-        train_independant_variables=train_independant_variables,
-        train_dependent_variables=np.array(y, ndmin=2).T,
-        test_independent_variables=test_independant_variables,
+        num_train_data=train_x.shape[0],
+        num_test_data=test_x.shape[0],
+        num_features=train_x.shape[1],
+        train_x=train_x,
+        train_y=train_y,
+        test_x=test_x,
     )
 
 
 def test_linear_regression_output(dataset: Dataset):
     reference_linear_regressor = linear_model.LinearRegression()
-    reference_linear_regressor.fit(dataset.train_independant_variables, dataset.train_dependent_variables)
-    reference_prediction = reference_linear_regressor.predict(dataset.test_independent_variables)
+    reference_linear_regressor.fit(dataset.train_x, dataset.train_y)
+    reference_prediction = reference_linear_regressor.predict(dataset.test_x)
 
-    normalize = MeanNormalization.from_data(dataset.train_independant_variables)
+    normalize = MeanNormalization.from_data(dataset.train_x)
 
-    normalized_x = normalize(dataset.train_independant_variables)
+    normalized_x = normalize(dataset.train_x)
     normalized_x_with_intercept = np.hstack(
         (np.ones((normalized_x.shape[0], 1)), normalized_x)
     )
 
-    cost_function = MeanSquareError(dataset.train_dependent_variables, normalized_x_with_intercept)
+    cost_function = MeanSquareError(dataset.train_y, normalized_x_with_intercept)
     stop_conditions = [
         MaxNumIterationsStopCondition(1_000_000),
         ConvergenceStopCondition(10_000, 0.00001, cost_function),
@@ -88,6 +88,6 @@ def test_linear_regression_output(dataset: Dataset):
         normalized_x_with_intercept=normalized_x_with_intercept,
     )
     linear_regressor = LinearRegressor(coefficients, normalize)
-    prediction = linear_regressor.predict(dataset.test_independent_variables)
+    prediction = linear_regressor.predict(dataset.test_x)
 
     assert prediction == pytest.approx(reference_prediction, rel=0.1)
