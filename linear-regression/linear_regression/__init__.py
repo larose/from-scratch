@@ -1,2 +1,2 @@
-from .gradient_descent import GradientDescent, GradientDescentParameters
+from .gradient_descent import gradient_descent, GradientDescentParameters
 from .linear_regressor import LinearRegressor

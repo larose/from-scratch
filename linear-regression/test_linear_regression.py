@@ -6,7 +6,7 @@ import pytest
 from sklearn import linear_model
 
 from linear_regression.gradient_descent import (
-    GradientDescent,
+    gradient_descent,
     GradientDescentParameters,
 )
 
@@ -46,8 +46,7 @@ def test_linear_regression_output(data):
     reference_linear_regressor.fit(train_x, train_y)
     reference_prediction = reference_linear_regressor.predict(test)
 
-    gradient_descent = GradientDescent(train_x, train_y, GradientDescentParameters())
-    linear_regressor = gradient_descent.fit()
+    linear_regressor = gradient_descent(GradientDescentParameters(), train_x, train_y)
     prediction = linear_regressor.predict(test)
 
     assert prediction == pytest.approx(reference_prediction, rel=0.1)

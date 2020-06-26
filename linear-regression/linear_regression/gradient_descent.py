@@ -1,3 +1,4 @@
+import typing
 from dataclasses import dataclass
 
 import numpy as np
@@ -14,80 +15,108 @@ class GradientDescentParameters:
     check_convergence_iteration_step: int = 10_000
 
 
-class GradientDescent:
-    def __init__(
-        self,
-        train_x: np.ndarray,
-        train_y: np.ndarray,
-        parameters: GradientDescentParameters,
-    ):
-        self._train_x = train_x
-        self._train_y = train_y
-        self._parameters = parameters
-        self._iteration_count = 0
+@dataclass
+class GradientDescentState:
+    parameters: GradientDescentParameters
+    train_x: np.ndarray
+    train_y: np.ndarray
+    iteration_count: int
+    normalize: typing.Callable[[np.ndarray], np.ndarray]
+    normalized_x_with_intercept: np.ndarray
+    coefficients: np.ndarray
+    stop_conditions: typing.List[typing.Callable[[int], bool]]
 
-        self._init_normalizer()
-        self._normalize_x()
-        self._init_coefficients()
-        self._init_stop_conditions()
 
-    def fit(self):
-        while not self._stop():
-            cost_function_gradient = self._cost_function_gradient()
-            coefficient_deltas = (
-                -self._parameters.learning_rate * cost_function_gradient
-            )
-            self._coefficients += coefficient_deltas
-            self._iteration_count += 1
+def init_gradient_descent_state(
+    parameters: GradientDescentParameters, train_x: np.ndarray, train_y=np.ndarray
+):
+    normalize = init_normalize(train_x)
+    normalized_x_with_intercept = normalize_x(normalize, train_x)
+    coefficients = init_coefficients(normalized_x_with_intercept)
 
-        return self._create_linear_regressor()
+    return GradientDescentState(
+        parameters=parameters,
+        train_x=train_x,
+        train_y=train_y,
+        iteration_count=0,
+        normalize=normalize,
+        normalized_x_with_intercept=normalized_x_with_intercept,
+        coefficients=coefficients,
+        stop_conditions=init_stop_conditions(
+            parameters.max_num_iterations,
+            parameters.check_convergence_iteration_step,
+            parameters.convergence_threshold,
+            coefficients,
+            normalized_x_with_intercept,
+            train_y,
+        ),
+    )
 
-    def _init_normalizer(self):
-        self._normalize = MeanNormalization.from_data(self._train_x)
 
-    def _normalize_x(self):
-        normalized_x = self._normalize(self._train_x)
-        self._normalized_x_with_intercept = np.hstack(
-            (np.ones((normalized_x.shape[0], 1)), normalized_x)
+def init_normalize(train_x: np.ndarray):
+    return MeanNormalization.from_data(train_x)
+
+
+def normalize_x(normalize, train_x):
+    normalized_x = normalize(train_x)
+    return np.hstack((np.ones((normalized_x.shape[0], 1)), normalized_x))
+
+
+def init_coefficients(normalized_x_with_intercept):
+    return np.zeros((normalized_x_with_intercept.shape[1], 1))
+
+
+def init_stop_conditions(
+    max_num_iterations: int,
+    check_convergence_iteration_step: int,
+    convergence_threshold: int,
+    coefficients,
+    normalized_x_with_intercept,
+    train_y,
+):
+    return [
+        MaxNumIterationsStopCondition(max_num_iterations),
+        ConvergenceStopCondition(
+            check_convergence_iteration_step,
+            convergence_threshold,
+            lambda: cost(coefficients, normalized_x_with_intercept, train_y),
+        ),
+    ]
+
+
+def cost(coefficients, x, y):
+    predictions = np.dot(x, coefficients)
+    deltas = predictions - y
+    deltas_squared = deltas ** 2
+    deltas_squared_sum = np.sum(deltas_squared)
+    return deltas_squared_sum / (2 * x.shape[0])
+
+
+def gradient_descent(
+    parameters: GradientDescentParameters, train_x: np.ndarray, train_y: np.ndarray
+):
+    state = init_gradient_descent_state(parameters, train_x, train_y)
+
+    while not stop(state.iteration_count, state.stop_conditions):
+        cost_function_gradient = compute_cost_function_gradient(
+            state.normalized_x_with_intercept, state.coefficients, train_y
         )
+        coefficient_deltas = -parameters.learning_rate * cost_function_gradient
+        state.coefficients += coefficient_deltas
+        state.iteration_count += 1
 
-    def _init_coefficients(self):
-        self._coefficients = np.zeros((self._normalized_x_with_intercept.shape[1], 1))
+    return LinearRegressor(state.coefficients, state.normalize)
 
-    def _init_stop_conditions(self):
-        self._stop_conditions = [
-            MaxNumIterationsStopCondition(self._parameters.max_num_iterations),
-            ConvergenceStopCondition(
-                self._parameters.check_convergence_iteration_step,
-                self._parameters.convergence_threshold,
-                lambda: self._cost(
-                    self._coefficients, self._normalized_x_with_intercept, self._train_y
-                ),
-            ),
-        ]
 
-    def _create_linear_regressor(self):
-        return LinearRegressor(self._coefficients, self._normalize)
+def stop(iteration_count, stop_conditions):
+    return any(stop_condition(iteration_count) for stop_condition in stop_conditions)
 
-    def _stop(self):
-        return any(
-            stop_condition(self._iteration_count)
-            for stop_condition in self._stop_conditions
-        )
 
-    def _cost_function_gradient(self):
-        predicted_values = np.dot(self._normalized_x_with_intercept, self._coefficients)
-        deltas = predicted_values - self._train_y
-        gradient_sum_term = self._normalized_x_with_intercept.T.dot(deltas)
-        return gradient_sum_term / self._normalized_x_with_intercept.shape[0]
-
-    @staticmethod
-    def _cost(coefficients, x, y):
-        predictions = np.dot(x, coefficients)
-        deltas = predictions - y
-        deltas_squared = deltas ** 2
-        deltas_squared_sum = np.sum(deltas_squared)
-        return deltas_squared_sum / (2 * x.shape[0])
+def compute_cost_function_gradient(normalized_x_with_intercept, coefficients, train_y):
+    predicted_values = np.dot(normalized_x_with_intercept, coefficients)
+    deltas = predicted_values - train_y
+    gradient_sum_term = normalized_x_with_intercept.T.dot(deltas)
+    return gradient_sum_term / normalized_x_with_intercept.shape[0]
 
 
 class MaxNumIterationsStopCondition:
