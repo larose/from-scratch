@@ -21,8 +21,21 @@ class GradientDescentState:
     coefficients: np.ndarray
 
 
+class CostFunction:
+    def __init__(self, train_y: np.ndarray, normalized_x_with_intercept: np.ndarray):
+        self._train_y = train_y
+        self._normalized_x_with_intercept = normalized_x_with_intercept
+
+    def compute(self, coefficients):
+        predictions = np.dot(self._normalized_x_with_intercept, coefficients)
+        deltas = predictions - self._train_y
+        deltas_squared = deltas ** 2
+        deltas_squared_sum = np.sum(deltas_squared)
+        return deltas_squared_sum / (2 * self._normalized_x_with_intercept.shape[0])
+
+
 def init_gradient_descent_state(
-    normalized_x_with_intercept: np.ndarray
+        normalized_x_with_intercept: np.ndarray
 ) -> GradientDescentState:
     coefficients = init_coefficients(normalized_x_with_intercept)
 
@@ -33,17 +46,16 @@ def init_coefficients(normalized_x_with_intercept):
     return np.zeros((normalized_x_with_intercept.shape[1], 1))
 
 
-def init_stop_conditions(parameters, normalized_x_with_intercept, train_y):
+def init_stop_conditions(parameters, cost_function: CostFunction):
     return [
         MaxNumIterationsStopCondition(parameters),
-        ConvergenceStopCondition(parameters, normalized_x_with_intercept, train_y),
+        ConvergenceStopCondition(parameters, cost_function),
     ]
 
 
 def gradient_descent(
-    parameters: GradientDescentParameters, train_x: np.ndarray, train_y: np.ndarray
+        parameters: GradientDescentParameters, train_x: np.ndarray, train_y: np.ndarray
 ) -> LinearRegressor:
-
     normalize = MeanNormalization.from_data(train_x)
 
     normalized_x = normalize(train_x)
@@ -51,8 +63,10 @@ def gradient_descent(
         (np.ones((normalized_x.shape[0], 1)), normalized_x)
     )
 
+    cost_function = CostFunction(train_y, normalized_x_with_intercept)
+
     stop_conditions = init_stop_conditions(
-        parameters, normalized_x_with_intercept, train_y
+        parameters, cost_function
     )
 
     state = init_gradient_descent_state(normalized_x_with_intercept)
@@ -73,7 +87,7 @@ def stop(state, stop_conditions) -> bool:
 
 
 def compute_cost_function_gradient(
-    normalized_x_with_intercept, coefficients, train_y
+        normalized_x_with_intercept, coefficients, train_y
 ) -> np.ndarray:
     predicted_values = np.dot(normalized_x_with_intercept, coefficients)
     deltas = predicted_values - train_y
@@ -89,20 +103,22 @@ class MaxNumIterationsStopCondition:
         return state.iteration_count >= self._max_num_iterations
 
 
+# ConvergenceStopCondition shouldn't know how to compute the cost, it should just call a
+# function that does it for it.
+
+
 class ConvergenceStopCondition:
     def __init__(
-        self,
-        parameters: GradientDescentParameters,
-        normalized_x_with_intercept,
-        train_y,
+            self,
+            parameters: GradientDescentParameters,
+            cost_function: CostFunction,
     ):
         self._check_convergence_iteration_step = (
             parameters.check_convergence_iteration_step
         )
         self._convergence_threshold = parameters.convergence_threshold
-        self._normalized_x_with_intercept = normalized_x_with_intercept
-        self._train_y = train_y
         self._previous_cost_value = float("inf")
+        self._cost_function = cost_function
 
     def __call__(self, state: GradientDescentState):
         return self._check_convergence(state.iteration_count) and self._has_converged(
@@ -113,18 +129,10 @@ class ConvergenceStopCondition:
         return iteration_count % self._check_convergence_iteration_step == 0
 
     def _has_converged(self, coefficient):
-        current_cost_value = self._cost(coefficient)
+        current_cost_value = self._cost_function.compute(coefficient)
         has_converged = (
-            self._previous_cost_value - current_cost_value < self._convergence_threshold
+                self._previous_cost_value - current_cost_value < self._convergence_threshold
         )
         self._previous_cost_value = current_cost_value
 
         return has_converged
-
-    def _cost(self, coefficients):
-        predictions = np.dot(self._normalized_x_with_intercept, coefficients)
-        deltas = predictions - self._train_y
-        deltas_squared = deltas ** 2
-        deltas_squared_sum = np.sum(deltas_squared)
-        return deltas_squared_sum / (2 * self._normalized_x_with_intercept.shape[0])
-
