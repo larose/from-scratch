@@ -71,7 +71,9 @@ def test_linear_regression_output(dataset: Dataset):
         (np.ones((normalized_x.shape[0], 1)), normalized_x)
     )
 
-    cost_function = MeanSquareError(dataset.train_y, normalized_x_with_intercept)
+    cost_function = MeanSquareError(
+        dataset.train_y, normalized_x_with_intercept, dataset.num_train_data
+    )
     stop_condition = AnyStopCondition(
         [
             MaxNumIterationsStopCondition(1_000_000),

@@ -4,10 +4,10 @@ from .stop_conditions import StopCondition
 
 
 def gradient_descent(
-        learning_rate: float,
-        cost_funtion: CostFunction,
-        stop_condition: StopCondition,
-        state: GradientDescentState,
+    learning_rate: float,
+    cost_funtion: CostFunction,
+    stop_condition: StopCondition,
+    state: GradientDescentState,
 ):
     while not stop_condition.evaluate(state):
         gradient = cost_funtion.gradient(state.coefficients)
