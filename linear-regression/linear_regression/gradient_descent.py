@@ -14,6 +14,7 @@ def gradient_descent(
     state = GradientDescentState(
         iteration_count=0, coefficients=np.zeros((num_features + 1, 1))
     )
+
     while not stop_condition.evaluate(state):
         gradient = cost_funtion.gradient(state.coefficients)
         state.coefficients -= learning_rate * gradient

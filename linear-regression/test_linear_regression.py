@@ -8,9 +8,8 @@ from sklearn import linear_model
 
 from linear_regression.cost_functions import MeanSquareError
 from linear_regression.gradient_descent import gradient_descent
-from linear_regression.gradient_descent_state import GradientDescentState
 from linear_regression.linear_regressor import LinearRegressor
-from linear_regression.normalization import MeanNormalization
+from linear_regression.normalizers import MeanNormalizer
 from linear_regression.stop_conditions import (
     AnyStopCondition,
     ConvergenceStopCondition,
@@ -59,16 +58,26 @@ def dataset(request):
     )
 
 
+def create_normalizer(train_x: np.ndarray):
+    return MeanNormalizer.from_data(train_x)
+
+
+def create_normalized_x_with_intercept(
+    normalizer: MeanNormalizer, train_x: np.ndarray, num_train_data: int
+):
+    normalized_x = normalizer.normalize(train_x)
+    return np.hstack((np.ones((num_train_data, 1)), normalized_x))
+
+
 def test_linear_regression_output(dataset: Dataset):
     reference_linear_regressor = linear_model.LinearRegression()
     reference_linear_regressor.fit(dataset.train_x, dataset.train_y)
     reference_prediction = reference_linear_regressor.predict(dataset.test_x)
 
-    normalize = MeanNormalization.from_data(dataset.train_x)
+    normalizer = create_normalizer(dataset.train_x)
 
-    normalized_x = normalize(dataset.train_x)
-    normalized_x_with_intercept = np.hstack(
-        (np.ones((normalized_x.shape[0], 1)), normalized_x)
+    normalized_x_with_intercept = create_normalized_x_with_intercept(
+        normalizer, dataset.train_x, dataset.num_train_data
     )
 
     cost_function = MeanSquareError(
@@ -87,7 +96,7 @@ def test_linear_regression_output(dataset: Dataset):
         stop_condition=stop_condition,
         num_features=dataset.num_features,
     )
-    linear_regressor = LinearRegressor(coefficients, normalize)
+    linear_regressor = LinearRegressor(coefficients, normalizer)
     prediction = linear_regressor.predict(dataset.test_x)
 
     assert prediction == pytest.approx(reference_prediction, rel=0.1)

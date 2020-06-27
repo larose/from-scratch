@@ -1,12 +1,12 @@
 import numpy as np
 
 
-class MeanNormalization:
-    def __init__(self, average, range):
+class MeanNormalizer:
+    def __init__(self, average: float, range: float):
         self._average = average
         self._range = range
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def normalize(self, x: np.ndarray) -> np.ndarray:
         return (x - self._average) / self._range
 
     @staticmethod
@@ -16,4 +16,4 @@ class MeanNormalization:
         range = max - min
         average = x.mean(axis=0)
 
-        return MeanNormalization(average=average, range=range)
+        return MeanNormalizer(average=average, range=range)
