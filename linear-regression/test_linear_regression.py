@@ -63,7 +63,7 @@ def create_normalizer(train_x: np.ndarray):
 
 
 def create_normalized_x_with_intercept(
-    normalizer: MeanNormalizer, train_x: np.ndarray, num_train_data: int
+        normalizer: MeanNormalizer, train_x: np.ndarray, num_train_data: int
 ):
     normalized_x = normalizer.normalize(train_x)
     return np.hstack((np.ones((num_train_data, 1)), normalized_x))
